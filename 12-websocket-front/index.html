@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket App</title>
+</head>
+
+<body>
+    <h1> Websocket - <small style="color: gray;"> Connecting... </small> </h1>
+
+    <form>
+        <input type="text" placeholder="Send message" />
+        <button> Send </button>
+    </form>
+
+    <ul id="messages">
+
+    </ul>
+
+    <script>
+        let socket = null;
+        const form = document.querySelector('form');
+        const input = document.querySelector('input');
+        const ulList = document.querySelector('#messages');
+        const statusElement = document.querySelector('small');
+
+        function sendMessage(message) {
+            socket?.send(message);
+        }
+        function renderMessage(message) {
+            const li = document.createElement('li');
+            li.innerHTML = message;
+            ulList.prepend(li)
+        }
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const message = input.value;
+            sendMessage(message);
+            input.value = ''
+        })
+
+
+
+        function connectToServer() {
+            socket = new WebSocket('ws://localhost:3000');
+
+            socket.onopen = (event) => {
+                statusElement.style.color = "green"
+                statusElement.innerHTML = "Online"
+            }
+
+            socket.onclose = (event) => {
+                statusElement.style.color = "gray"
+                statusElement.innerHTML = "Offline"
+                // * ADVICE
+                //! The time in which the client must wait to try to reconnect, 
+                // must be 1500 * a random value, because otherwise we can 
+                // generate a "DDoS attack" to our own server.
+                setTimeout(() => {
+                    statusElement.style.color = "gray"
+                    statusElement.innerHTML = "Reconnecting..."
+                    connectToServer();
+                }, 1500)
+            }
+
+
+            socket.onmessage = ({ data }) => {
+                const { payload } = JSON.parse(data)
+                renderMessage(payload)
+            }
+        }
+
+        connectToServer();
+
+
+
+
+
+
+    </script>
+
+
+</body>
+
+</html>
